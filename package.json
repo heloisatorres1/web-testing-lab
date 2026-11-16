@@ -1,0 +1,36 @@
+{
+  "name": "web-testing-lab",
+  "version": "0.1.0",
+  "description": "QA portfolio: UI, API and BDD test automation with CI for SauceDemo, Swagger Petstore, Restful-Booker and QA Workspace.",
+  "scripts": {
+    "test": "playwright test",
+    "test:smoke": "playwright test --grep @smoke --project=chromium --project=api",
+    "test:ui": "playwright test --project=chromium --project=firefox --project=webkit --project=mobile",
+    "test:api": "playwright test --project=api",
+    "test:bdd": "playwright test --project=bdd",
+    "test:postman": "newman run postman/restful-booker.postman_collection.json -e postman/public.postman_environment.json -r cli,htmlextra --reporter-htmlextra-export newman-report/restful-booker.html && newman run postman/petstore.postman_collection.json -r cli,htmlextra --reporter-htmlextra-export newman-report/petstore.html",
+    "bddgen": "bddgen",
+    "report": "playwright show-report",
+    "report:allure": "allure generate allure-results -o allure-report",
+    "evidence": "tsx scripts/capture-evidence.ts",
+    "axe": "tsx scripts/axe-scan.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@playwright/test": "^1.65.1",
+    "@types/node": "^26.6.6",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1",
+    "allure": "^3.33.0",
+    "allure-playwright": "^3.14.0",
+    "newman": "^6.2.3",
+    "newman-reporter-htmlextra": "^1.23.1",
+    "playwright-bdd": "^9.2.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "private": true
+}

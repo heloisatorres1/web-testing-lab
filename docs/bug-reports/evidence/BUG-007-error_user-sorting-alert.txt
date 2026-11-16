@@ -1,0 +1,2 @@
+Alert shown after choosing "Name (Z to A)":
+Sorting is broken! This error has been reported to Backtrace.

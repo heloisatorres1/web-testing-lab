@@ -1,0 +1,107 @@
+{
+  "info": {
+    "name": "Restful-Booker",
+    "description": "Auth, CRUD and partial update of bookings. Every request carries its own tests; run in order (the collection creates, updates and deletes its own booking).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "baseUrl", "value": "https://restful-booker.herokuapp.com" }],
+  "item": [
+    {
+      "name": "TC-RB-001 Health check",
+      "request": { "method": "GET", "url": "{{baseUrl}}/ping" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('ping answers 201 Created', () => pm.response.to.have.status(201));",
+        "pm.test('answers within 3 s', () => pm.expect(pm.response.responseTime).to.be.below(3000));"
+      ] } }]
+    },
+    {
+      "name": "TC-RB-002 Auth with wrong password",
+      "request": { "method": "POST", "url": "{{baseUrl}}/auth", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"username\":\"admin\",\"password\":\"wrong\"}" } },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('no token is returned', () => { const b = pm.response.json(); pm.expect(b).to.not.have.property('token'); pm.expect(b.reason).to.eql('Bad credentials'); });"
+      ] } }]
+    },
+    {
+      "name": "Auth (get token)",
+      "request": { "method": "POST", "url": "{{baseUrl}}/auth", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"username\":\"{{username}}\",\"password\":\"{{password}}\"}" } },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 with a token', () => { pm.response.to.have.status(200); const t = pm.response.json().token; pm.expect(t).to.match(/^[a-z0-9]+$/); pm.collectionVariables.set('token', t); });"
+      ] } }]
+    },
+    {
+      "name": "TC-RB-003 Create booking",
+      "request": { "method": "POST", "url": "{{baseUrl}}/booking", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"firstname\":\"Ana\",\"lastname\":\"Silva-{{$timestamp}}\",\"totalprice\":350,\"depositpaid\":true,\"bookingdates\":{\"checkin\":\"2026-12-01\",\"checkout\":\"2026-12-05\"},\"additionalneeds\":\"Breakfast\"}" } },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "const sent = JSON.parse(pm.request.body.raw.replace('{{$timestamp}}', ''));",
+        "pm.test('200 and JSON', () => { pm.response.to.have.status(200); pm.response.to.be.json; });",
+        "pm.test('response schema', () => pm.response.to.have.jsonSchema({",
+        "  type: 'object', required: ['bookingid', 'booking'],",
+        "  properties: { bookingid: { type: 'integer', minimum: 1 }, booking: { type: 'object', required: ['firstname','lastname','totalprice','depositpaid','bookingdates'],",
+        "    properties: { bookingdates: { type: 'object', required: ['checkin','checkout'] } } } } }));",
+        "const b = pm.response.json();",
+        "pm.test('echoes what was sent', () => { pm.expect(b.booking.firstname).to.eql('Ana'); pm.expect(b.booking.totalprice).to.eql(350); pm.expect(b.booking.bookingdates).to.eql(sent.bookingdates); });",
+        "pm.collectionVariables.set('bookingId', b.bookingid); pm.collectionVariables.set('lastname', b.booking.lastname);"
+      ] } }]
+    },
+    {
+      "name": "TC-RB-003 Read booking back",
+      "request": { "method": "GET", "url": "{{baseUrl}}/booking/{{bookingId}}", "header": [{ "key": "Accept", "value": "application/json" }] },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200', () => pm.response.to.have.status(200));",
+        "pm.test('stored unchanged', () => { const b = pm.response.json(); pm.expect(b.firstname).to.eql('Ana'); pm.expect(b.lastname).to.eql(pm.collectionVariables.get('lastname')); pm.expect(b.additionalneeds).to.eql('Breakfast'); });"
+      ] } }]
+    },
+    {
+      "name": "TC-RB-004 Find booking by name",
+      "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/booking?lastname={{lastname}}", "host": ["{{baseUrl}}"], "path": ["booking"], "query": [{ "key": "lastname", "value": "{{lastname}}" }] } },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('exactly the created booking is found', () => pm.expect(pm.response.json()).to.eql([{ bookingid: Number(pm.collectionVariables.get('bookingId')) }]));"
+      ] } }]
+    },
+    {
+      "name": "TC-RB-005 Update without token is forbidden",
+      "request": { "method": "PUT", "url": "{{baseUrl}}/booking/{{bookingId}}", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"firstname\":\"Beatriz\",\"lastname\":\"{{lastname}}\",\"totalprice\":999,\"depositpaid\":false,\"bookingdates\":{\"checkin\":\"2026-12-01\",\"checkout\":\"2026-12-05\"}}" } },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('403 Forbidden', () => pm.response.to.have.status(403));"] } }]
+    },
+    {
+      "name": "TC-RB-005 Update with token",
+      "request": { "method": "PUT", "url": "{{baseUrl}}/booking/{{bookingId}}",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Cookie", "value": "token={{token}}" }],
+        "body": { "mode": "raw", "raw": "{\"firstname\":\"Beatriz\",\"lastname\":\"{{lastname}}\",\"totalprice\":999,\"depositpaid\":false,\"bookingdates\":{\"checkin\":\"2026-12-01\",\"checkout\":\"2026-12-05\"}}" } },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 and every sent field updated', () => { pm.response.to.have.status(200); const b = pm.response.json(); pm.expect(b.firstname).to.eql('Beatriz'); pm.expect(b.totalprice).to.eql(999); pm.expect(b.depositpaid).to.eql(false); });",
+        "// Observation (not a failure): PUT keeps 'additionalneeds' although it was not sent, so PUT does not fully replace the resource. Raised as a question in docs/test-cases/api.md.",
+        "console.log('PUT kept additionalneeds =', JSON.stringify(pm.response.json().additionalneeds));"
+      ] } }]
+    },
+    {
+      "name": "TC-RB-006 Partial update",
+      "request": { "method": "PATCH", "url": "{{baseUrl}}/booking/{{bookingId}}",
+        "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Cookie", "value": "token={{token}}" }],
+        "body": { "mode": "raw", "raw": "{\"totalprice\":1}" } },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('only totalprice changed', () => { pm.response.to.have.status(200); const b = pm.response.json(); pm.expect(b.totalprice).to.eql(1); pm.expect(b.firstname).to.eql('Beatriz'); pm.expect(b.depositpaid).to.eql(false); });"
+      ] } }]
+    },
+    {
+      "name": "TC-RB-007 Delete booking",
+      "request": { "method": "DELETE", "url": "{{baseUrl}}/booking/{{bookingId}}", "header": [{ "key": "Cookie", "value": "token={{token}}" }] },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('201 Created (the API uses 201 for delete)', () => pm.response.to.have.status(201));"] } }]
+    },
+    {
+      "name": "TC-RB-007 Deleted booking is gone",
+      "request": { "method": "GET", "url": "{{baseUrl}}/booking/{{bookingId}}" },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('404 Not Found', () => pm.response.to.have.status(404));"] } }]
+    },
+    {
+      "name": "TC-RB-009 Incomplete booking is refused",
+      "request": { "method": "POST", "url": "{{baseUrl}}/booking", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"firstname\":\"Only\"}" } },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('refused (500 in this API; a 400 would be the better answer)', () => pm.expect(pm.response.code).to.be.oneOf([400, 500]));"] } }]
+    }
+  ]
+}

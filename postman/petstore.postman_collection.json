@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "Swagger Petstore",
+    "description": "Create, read, update and delete a pet, with the response checked against the published Swagger definition. The collection owns the pet it creates and deletes it at the end.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [{ "key": "baseUrl", "value": "https://petstore.swagger.io/v2" }],
+  "event": [{ "listen": "prerequest", "script": { "exec": [
+    "if (!pm.collectionVariables.get('petId')) pm.collectionVariables.set('petId', 900000000000 + Math.floor(Math.random() * 1e9));"
+  ] } }],
+  "item": [
+    {
+      "name": "Contract: fetch swagger.json",
+      "request": { "method": "GET", "url": "{{baseUrl}}/swagger.json" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "// Postman's validator (tv4) does not know Swagger's int32/int64 formats, so 'format' keywords are dropped before use.",
+        "const stripFormat = (node) => { if (Array.isArray(node)) node.forEach(stripFormat); else if (node && typeof node === 'object') { delete node.format; Object.values(node).forEach(stripFormat); } return node; };",
+        "pm.test('Swagger 2.0 document with a Pet definition', () => { const s = pm.response.json(); pm.expect(s.swagger).to.eql('2.0'); pm.expect(s.definitions).to.have.property('Pet'); pm.collectionVariables.set('petSchema', JSON.stringify(stripFormat({ ...s.definitions.Pet, definitions: s.definitions }))); });"
+      ] } }]
+    },
+    {
+      "name": "TC-PS-001 Create pet",
+      "request": { "method": "POST", "url": "{{baseUrl}}/pet", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"id\":{{petId}},\"name\":\"wtl-postman-{{$timestamp}}\",\"photoUrls\":[\"https://example.com/photo.jpg\"],\"status\":\"available\",\"category\":{\"id\":1,\"name\":\"Dogs\"},\"tags\":[{\"id\":1,\"name\":\"portfolio\"}]}" } },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 JSON', () => { pm.response.to.have.status(200); pm.response.to.be.json; });",
+        "pm.test('matches the Pet definition', () => pm.response.to.have.jsonSchema(JSON.parse(pm.collectionVariables.get('petSchema'))));",
+        "pm.test('echoes id and status', () => { const p = pm.response.json(); pm.expect(p.id).to.eql(Number(pm.collectionVariables.get('petId'))); pm.expect(p.status).to.eql('available'); pm.collectionVariables.set('petName', p.name); });"
+      ] } }]
+    },
+    {
+      "name": "TC-PS-001 Read pet",
+      "request": { "method": "GET", "url": "{{baseUrl}}/pet/{{petId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 and same name', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().name).to.eql(pm.collectionVariables.get('petName')); });",
+        "pm.test('matches the Pet definition', () => pm.response.to.have.jsonSchema(JSON.parse(pm.collectionVariables.get('petSchema'))));"
+      ] } }]
+    },
+    {
+      "name": "TC-PS-001 Update pet to sold",
+      "request": { "method": "PUT", "url": "{{baseUrl}}/pet", "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\"id\":{{petId}},\"name\":\"{{petName}}-sold\",\"photoUrls\":[\"https://example.com/photo.jpg\"],\"status\":\"sold\"}" } },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('200 and status sold', () => { pm.response.to.have.status(200); pm.expect(pm.response.json().status).to.eql('sold'); });"
+      ] } }]
+    },
+    {
+      "name": "TC-PS-005 Find by status sold includes the pet",
+      "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/pet/findByStatus?status=sold", "host": ["{{baseUrl}}"], "path": ["pet", "findByStatus"], "query": [{ "key": "status", "value": "sold" }] } },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "const pets = pm.response.json();",
+        "pm.test('every pet is sold', () => pm.expect(pets.filter(p => p.status !== 'sold')).to.be.empty);",
+        "pm.test('the updated pet is listed', () => pm.expect(pets.some(p => p.id === Number(pm.collectionVariables.get('petId')))).to.be.true);"
+      ] } }]
+    },
+    {
+      "name": "TC-PS-001 Delete pet",
+      "request": { "method": "DELETE", "url": "{{baseUrl}}/pet/{{petId}}" },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('200', () => pm.response.to.have.status(200));"] } }]
+    },
+    {
+      "name": "TC-PS-002 Deleted pet is not found",
+      "request": { "method": "GET", "url": "{{baseUrl}}/pet/{{petId}}" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('404 with an error body', () => { pm.response.to.have.status(404); pm.expect(pm.response.json().message).to.eql('Pet not found'); });",
+        "pm.collectionVariables.unset('petId');"
+      ] } }]
+    },
+    {
+      "name": "TC-PS-006 Invalid status gives an empty list",
+      "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/pet/findByStatus?status=flying", "host": ["{{baseUrl}}"], "path": ["pet", "findByStatus"], "query": [{ "key": "status", "value": "flying" }] } },
+      "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 and []', () => { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.eql([]); });"] } }]
+    },
+    {
+      "name": "TC-PS-007 Store inventory",
+      "request": { "method": "GET", "url": "{{baseUrl}}/store/inventory" },
+      "event": [{ "listen": "test", "script": { "exec": [
+        "pm.test('object of integer counts', () => { const inv = pm.response.json(); Object.values(inv).forEach(v => pm.expect(Number.isInteger(v)).to.be.true); });"
+      ] } }]
+    }
+  ]
+}
