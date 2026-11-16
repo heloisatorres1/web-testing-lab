@@ -8,3 +8,4 @@ blob-report/
 newman-report/
 .features-gen/
 full-run.log
+ci-watch.log
