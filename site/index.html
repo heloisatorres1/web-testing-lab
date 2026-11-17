@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Web Testing Lab</title>
+<meta name="description" content="A guided tour of a web QA portfolio project: test strategy, Playwright UI automation, API tests with Postman and Playwright, Gherkin scenarios, bug reports with evidence, and a CI pipeline that publishes an Allure report.">
+<style>
+  :root {
+    --bg: #f7f8f7; --surface: #ffffff; --ink: #1c2328; --ink-2: #4a5761; --line: #d9dfe3;
+    --accent: #1f6f5c; --accent-ink: #ffffff; --soft: #e8f1ee; --warn: #8a4b08; --warn-soft: #fbf1e3;
+    --code-bg: #f1f3f4; --mono: ui-monospace, "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1518; --surface: #171f24; --ink: #e8edf0; --ink-2: #a6b3bc; --line: #2b363d;
+      --accent: #4fb99a; --accent-ink: #0f1518; --soft: #16302a; --warn: #f0b36b; --warn-soft: #2d2114; --code-bg: #10171b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 system-ui, "Segoe UI", Roboto, sans-serif; }
+  a { color: var(--accent); }
+  header { background: var(--surface); border-bottom: 1px solid var(--line); }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 16px; }
+  header .wrap { padding-top: 40px; padding-bottom: 32px; }
+  h1 { font-size: 2rem; margin: 0 0 8px; }
+  .lead { font-size: 1.125rem; color: var(--ink-2); max-width: 70ch; margin: 0 0 20px; }
+  .links a { display: inline-block; margin: 0 12px 8px 0; padding: 8px 14px; border: 1px solid var(--accent); border-radius: 6px; text-decoration: none; font-weight: 600; }
+  .links a.primary { background: var(--accent); color: var(--accent-ink); }
+  nav.toc { position: sticky; top: 0; background: var(--bg); border-bottom: 1px solid var(--line); z-index: 1; }
+  nav.toc .wrap { display: flex; gap: 4px 18px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; font-size: 0.9rem; }
+  nav.toc a { text-decoration: none; color: var(--ink-2); }
+  nav.toc a:hover { color: var(--accent); }
+  main .wrap { padding-top: 24px; padding-bottom: 64px; }
+  section { margin: 0 0 48px; }
+  h2 { font-size: 1.5rem; margin: 0 0 6px; padding-top: 16px; }
+  h3 { font-size: 1.1rem; margin: 24px 0 6px; }
+  .why { color: var(--ink-2); margin: 0 0 16px; max-width: 72ch; }
+  p { max-width: 72ch; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0 20px; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--ink-2); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .table-wrap { overflow-x: auto; }
+  pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow-x: auto; font: 0.85rem/1.5 var(--mono); margin: 10px 0 16px; }
+  code { font-family: var(--mono); font-size: 0.9em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre code { background: none; padding: 0; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; margin: 14px 0; }
+  .card h3 { margin-top: 0; }
+  .label { display: inline-block; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--accent); background: var(--soft); padding: 2px 8px; border-radius: 4px; margin-bottom: 8px; }
+  .note { background: var(--warn-soft); border-left: 4px solid var(--warn); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 14px 0; max-width: 72ch; }
+  .steps { counter-reset: s; list-style: none; padding: 0; margin: 0; }
+  .steps li { counter-increment: s; position: relative; padding: 0 0 18px 44px; }
+  .steps li::before { content: counter(s); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700; display: grid; place-items: center; }
+  .steps strong { display: block; margin-bottom: 2px; }
+  .bugs { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .bug { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .bug img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; object-position: top; border-bottom: 1px solid var(--line); background: var(--code-bg); }
+  .bug .body { padding: 12px 14px; font-size: 0.92rem; }
+  .bug .id { font-family: var(--mono); color: var(--ink-2); font-size: 0.8rem; }
+  .bug h4 { margin: 2px 0 6px; font-size: 1rem; }
+  .sev { font-size: 0.78rem; padding: 1px 7px; border-radius: 4px; border: 1px solid var(--line); color: var(--ink-2); margin-right: 4px; }
+  dl.glossary dt { font-weight: 700; margin-top: 12px; }
+  dl.glossary dd { margin: 2px 0 0; color: var(--ink-2); max-width: 72ch; }
+  footer { border-top: 1px solid var(--line); color: var(--ink-2); font-size: 0.9rem; }
+  footer .wrap { padding: 20px 16px; }
+  @media (max-width: 600px) { h1 { font-size: 1.6rem; } .steps li { padding-left: 40px; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Web Testing Lab</h1>
+    <p class="lead">A QA portfolio project that tests four public web systems: an online store, two REST APIs and a QA web app. This page is a guided tour: what was built, why, and how each piece works, with the real code next to the explanation.</p>
+    <div class="links">
+      <a class="primary" href="report/">Open the test report</a>
+      <a href="https://github.com/heloisatorres1/web-testing-lab">Source on GitHub</a>
+      <a href="https://github.com/heloisatorres1/web-testing-lab/actions">CI runs</a>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Sections">
+  <div class="wrap">
+    <a href="#what">What it is</a>
+    <a href="#journey">One test, start to finish</a>
+    <a href="#layers">The layers</a>
+    <a href="#known">Known bugs</a>
+    <a href="#bugs">Bugs found</a>
+    <a href="#results">Results</a>
+    <a href="#ci">The pipeline</a>
+    <a href="#glossary">Glossary</a>
+    <a href="#run">Run it</a>
+  </div>
+</nav>
+
+<main>
+<div class="wrap">
+
+<section id="what">
+  <h2>What this project is</h2>
+  <p class="why">Unlike an app you click through, a test automation project's product is the testing itself. It takes a checklist that recruiters use for web QA portfolios and covers every item on real, public systems.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Portfolio item</th><th>Where it is in this project</th></tr></thead>
+    <tbody>
+      <tr><td>UI automation (Playwright)</td><td><code>tests/saucedemo/</code> and <code>tests/qa-workspace/</code>, built on page objects in <code>src/</code>. Runs in Chromium, Firefox, WebKit and a phone viewport.</td></tr>
+      <tr><td>API tests (Postman and Swagger)</td><td><code>postman/</code> collections run by Newman, plus the same checks in code in <code>tests/api/</code>, validated against the published Swagger contract.</td></tr>
+      <tr><td>BDD scenarios in Gherkin</td><td><code>features/</code>: <code>.feature</code> files in plain language, connected to the same page objects through <code>playwright-bdd</code>.</td></tr>
+      <tr><td>Test plan, test cases, bug reports</td><td><code>docs/test-plan.md</code>, <code>docs/test-cases/</code> (with traceability to requirements), <code>docs/bug-reports/</code> (11 bugs with screenshots).</td></tr>
+      <tr><td>CI/CD pipeline</td><td><code>.github/workflows/tests.yml</code>: every push and every night, all suites run and the report is published to this site.</td></tr>
+      <tr><td>Clear README</td><td>Strategy, results and lessons learned on the repository front page.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>Systems under test</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>System</th><th>What it is</th><th>Why it was chosen</th></tr></thead>
+    <tbody>
+      <tr><td><a href="https://www.saucedemo.com/">SauceDemo</a></td><td>Practice online store</td><td>Login, catalog, cart, checkout. It ships special user accounts with <strong>known defects</strong>, so the suite has to detect real failures, not only pass.</td></tr>
+      <tr><td><a href="https://petstore.swagger.io/">Swagger Petstore</a></td><td>REST API with a Swagger spec</td><td>Contract testing. Its data is shared with everyone on the internet, so tests must create and delete their own.</td></tr>
+      <tr><td><a href="https://restful-booker.herokuapp.com/apidoc/">Restful-Booker</a></td><td>REST API with token auth</td><td>Authentication, full CRUD, partial updates.</td></tr>
+      <tr><td><a href="https://heloisatorres1.github.io/qa-workspace/">QA Workspace</a></td><td>My own QA web app</td><td>Tested black-box from a separate repo, using its README as the specification, like an independent QA team would.</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section id="journey">
+  <h2>One test, from idea to green check</h2>
+  <p class="why">The best way to understand the project is to follow a single case through every layer. This is TC-SD-022, "a shopper completes a purchase", the most important flow in a store.</p>
+  <ol class="steps">
+    <li>
+      <strong>Exploration: learn what the site actually does</strong>
+      Before writing any test, I used the site with every account and wrote down what I saw: messages, prices, which buttons misbehave. Three of my first assumptions were wrong (for example, the lazy-load page never ends), which is exactly why exploration comes first.
+      <pre><code>Tax observed: Backpack + Bike Light → item total $39.98, tax $3.20, total $43.18.
+The tax rate is 8%, rounded to the cent.            (docs/exploration/2026-11-16-saucedemo-recon.md)</code></pre>
+    </li>
+    <li>
+      <strong>Requirement and test case</strong>
+      SauceDemo has no written spec, so the observed behaviour of the reference user became numbered requirements. Each test case links to one, which is what "traceability" means: you can always answer "which requirement does this test protect?".
+      <pre><code>| REQ-SD-08 | The overview shows item total, 8% tax rounded to the cent, and total = item total + tax. |
+
+| TC-SD-022 | Complete purchase (happy path) | 07, 08, 09 | P1 |
+|   Add Backpack + Bike Light → Checkout → Ana / Silva / 86000 → Continue → Finish
+|   Overview: item total $39.98, tax $3.20, total $43.18 → "Thank you for your order!"; badge hidden</code></pre>
+    </li>
+    <li>
+      <strong>Page objects: one class per screen</strong>
+      Instead of repeating selectors in every test, each page of the site gets a class that knows where its elements are and what you can do there. If the site changes a button, you fix one line here, not fifty tests.
+      <pre><code>// src/saucedemo/pages/CheckoutPage.ts
+export class CheckoutPage {
+  constructor(private readonly page: Page) {
+    this.firstName = page.getByTestId('firstName');
+    this.finishButton = page.getByTestId('finish');
+    this.completeHeader = page.getByTestId('complete-header');
+    // ...
+  }
+  async submitInformation(info) { await this.fillInformation(info); await this.continueButton.click(); }
+  /** Reads labels such as "Item total: $39.98" as numbers. */
+  async amounts() { /* ... */ }
+}</code></pre>
+    </li>
+    <li>
+      <strong>The automated test, once per user</strong>
+      The same test runs for all five accounts that can log in. <code>expectKnownDefect</code> marks the run as an expected failure when a documented bug applies to that user (see <a href="#known">Known bugs</a>).
+      <pre><code>// tests/saucedemo/checkout.spec.ts
+for (const user of ACCEPTED_USERS) {
+  test(`TC-SD-022 ${user} completes a purchase @p1 @smoke`, async ({ loginAs, inventory, cart, checkout }) => {
+    expectKnownDefect('TC-SD-022', user);
+    await loginAs(user);
+    await inventory.add(backpack, bikeLight);
+    await inventory.openCart();
+    await cart.checkout();
+    await checkout.submitInformation(CUSTOMER);
+    await checkout.expectOnOverview();
+    expect(await checkout.amounts()).toEqual({ subtotal: 39.98, tax: 3.2, total: 43.18 });
+    await checkout.finish();
+    await expect(checkout.completeHeader).toHaveText(MESSAGES.orderComplete);
+    await inventory.expectCartCount(0);
+  });
+}</code></pre>
+    </li>
+    <li>
+      <strong>The same flow in plain language (BDD)</strong>
+      A Gherkin scenario describes the behaviour in words a product owner can read. Each line is matched to a step function that reuses the page objects above, so there is one implementation and two ways to read it.
+      <pre><code># features/saucedemo/checkout.feature
+Scenario: TC-SD-022 A shopper completes a purchase
+  Given I add "Sauce Labs Backpack" and "Sauce Labs Bike Light" to the cart
+  When I check out as "Ana" "Silva" with postal code "86000-000"
+  Then the overview shows an item total of $39.98, tax of $3.20 and a total of $43.18
+  When I finish the order
+  Then I see "Thank you for your order!"
+  And the cart is empty</code></pre>
+    </li>
+    <li>
+      <strong>CI runs it and publishes the result</strong>
+      On every push, and every night at 06:00 UTC, GitHub Actions runs this test in four browsers and the BDD version, then builds the report you can open from the top of this page. For <code>standard_user</code> it passes; for <code>problem_user</code> and <code>error_user</code> it fails as expected and shows the bug ID.
+    </li>
+  </ol>
+</section>
+
+<section id="layers">
+  <h2>The layers, and why there are several</h2>
+  <p class="why">Each rule is checked at the lowest level where it can be checked. API tests are fast and precise; browser tests are slow but are the only way to test what a user actually sees. Having both is the "test pyramid".</p>
+
+  <div class="card">
+    <span class="label">API, in Postman</span>
+    <h3>Collections anyone on a team can open</h3>
+    <p>Postman is the tool most teams use to explore and share API tests. Each request carries its own assertions; Newman runs the whole collection from the command line in CI.</p>
+    <pre><code>// postman/restful-booker.postman_collection.json, request "TC-RB-005 Update without token is forbidden"
+pm.test('403 Forbidden', () => pm.response.to.have.status(403));</code></pre>
+  </div>
+
+  <div class="card">
+    <span class="label">API, in code</span>
+    <h3>Contract testing against the Swagger document</h3>
+    <p>The Petstore publishes a Swagger (OpenAPI) file that says what every response must look like. The test downloads it and validates the real response against it, so a field that silently disappears is caught.</p>
+    <pre><code>// tests/api/petstore.spec.ts
+const validate = await swaggerValidator(request, 'Pet');       // compiled from /swagger.json
+const createdBody = await expectJson(await request.post(`${PETSTORE_URL}/pet`, { data: pet }), 200);
+expectValid(validate, createdBody, 'POST /pet response');</code></pre>
+    <p>Because the Petstore is shared with the whole internet, every test creates a pet with a random ID far above the ones other people use, and deletes it afterwards. Tests never depend on data they did not create.</p>
+  </div>
+
+  <div class="card">
+    <span class="label">UI</span>
+    <h3>Waiting for state, never sleeping</h3>
+    <p>SauceDemo's dynamic pages load content late on purpose: a spinner, an infinite list, a slider that moves on its own. A test that waits "2 seconds" is wrong on a slow day and slow on a fast one. Playwright's assertions keep checking until the state is right.</p>
+    <pre><code>// tests/saucedemo/dynamic-catalog.spec.ts
+await menu.openDynamicPage('Spinner');
+await expect(dynamicCatalog.spinnerNames).toHaveCount(PRODUCTS.length, { timeout: 10_000 });</code></pre>
+  </div>
+
+  <div class="card">
+    <span class="label">Accessibility</span>
+    <h3>An axe scan on every key page</h3>
+    <p>axe is the engine behind most accessibility checkers. The test fails on critical and serious WCAG violations and attaches the full list to the report. This is how BUG-011 in my own app was found.</p>
+  </div>
+
+  <div class="card">
+    <span class="label">Black-box</span>
+    <h3>Testing my own app from the outside</h3>
+    <p>QA Workspace already has its own test suite inside its repo. Here it is tested the way an independent QA team would: only the deployed site and the public README, in browsers its own suite does not run, after every deploy.</p>
+  </div>
+</section>
+
+<section id="known">
+  <h2>Known bugs stay visible without turning the build red</h2>
+  <p class="why">SauceDemo's special users are broken on purpose. Skipping their tests would hide the defects; letting them fail would make every run red and meaningless. The middle way: a map of confirmed defects, and tests that are expected to fail.</p>
+  <pre><code>// src/saucedemo/known-defects.ts
+const KNOWN = {
+  'TC-SD-022': { problem_user: 'BUG-004', error_user: 'BUG-006' },
+  'TC-SD-037': { '*': 'BUG-001' },        // affects every user
+  // ...
+};
+
+export function expectKnownDefect(caseId, user) {
+  const bug = bugFor(caseId, user);
+  if (!bug) return;
+  test.info().annotations.push({ type: 'issue', description: `${bug}: ${BUGS[bug]}` });
+  test.fail(true, `${bug}: ${BUGS[bug]}`);   // expected failure, linked to the bug report
+}</code></pre>
+  <p>In the report these show as "expected failures" with the bug ID. If the site ever fixes a bug, that test passes <em>unexpectedly</em>, the run fails, and that is the signal to close the bug report and remove the entry.</p>
+</section>
+
+<section id="bugs">
+  <h2>Bugs found</h2>
+  <p class="why">Eleven defects, each with a report in the same format: environment, severity (impact on the user) and priority (fix order) rated separately, steps, expected vs actual, and evidence. The screenshots were taken by a script that replays the exact steps in the report, so they can be regenerated at any time.</p>
+  <div class="bugs">
+    <article class="bug">
+      <img src="https://raw.githubusercontent.com/heloisatorres1/web-testing-lab/main/docs/bug-reports/evidence/BUG-001-cart-inherited-by-visual_user.png" alt="Cart page showing two items right after a different user logged in" loading="lazy">
+      <div class="body"><span class="id">BUG-001 · SauceDemo</span><h4>Cart is not cleared on logout and is shown to the next user</h4><span class="sev">Major</span><span class="sev">P1</span><p>Happens with the reference user, not only the broken test accounts.</p><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-001.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <img src="https://raw.githubusercontent.com/heloisatorres1/web-testing-lab/main/docs/bug-reports/evidence/BUG-002-problem_user-placeholder-images.png" alt="Product list where every product shows the same placeholder image" loading="lazy">
+      <div class="body"><span class="id">BUG-002 · SauceDemo</span><h4>Product images replaced by a "not found" placeholder</h4><span class="sev">Minor</span><span class="sev">P3</span><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-002.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <img src="https://raw.githubusercontent.com/heloisatorres1/web-testing-lab/main/docs/bug-reports/evidence/BUG-003-problem_user-three-items-not-added.png" alt="Product list with the cart badge at 3 after clicking all six Add to cart buttons" loading="lazy">
+      <div class="body"><span class="id">BUG-003 · SauceDemo</span><h4>"Add to cart" does nothing for three products</h4><span class="sev">Major</span><span class="sev">P1</span><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-003.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <img src="https://raw.githubusercontent.com/heloisatorres1/web-testing-lab/main/docs/bug-reports/evidence/BUG-004-problem_user-last-name-written-into-first-name.png" alt="Checkout form with Silva in the first-name field, an empty last-name field and the error Last Name is required" loading="lazy">
+      <div class="body"><span class="id">BUG-004 · SauceDemo</span><h4>Typing in Last Name overwrites First Name, so checkout is blocked</h4><span class="sev">Critical</span><span class="sev">P1</span><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-004.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <img src="https://raw.githubusercontent.com/heloisatorres1/web-testing-lab/main/docs/bug-reports/evidence/BUG-005-error_user-last-name-stays-empty.png" alt="Checkout form where the last-name field stayed empty after typing" loading="lazy">
+      <div class="body"><span class="id">BUG-005 · SauceDemo</span><h4>Last Name ignores input, but checkout continues without it</h4><span class="sev">Major</span><span class="sev">P2</span><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-005.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <img src="https://raw.githubusercontent.com/heloisatorres1/web-testing-lab/main/docs/bug-reports/evidence/BUG-006-error_user-finish-does-nothing.png" alt="Checkout overview still shown after clicking Finish" loading="lazy">
+      <div class="body"><span class="id">BUG-006 · SauceDemo</span><h4>Finish does nothing, so the order never completes</h4><span class="sev">Critical</span><span class="sev">P1</span><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-006.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <img src="https://raw.githubusercontent.com/heloisatorres1/web-testing-lab/main/docs/bug-reports/evidence/BUG-007-error_user-list-not-sorted.png" alt="Product list still in A to Z order after choosing Z to A" loading="lazy">
+      <div class="body"><span class="id">BUG-007 · SauceDemo</span><h4>Sorting does not reorder the product list</h4><span class="sev">Major</span><span class="sev">P2</span><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-007.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <img src="https://raw.githubusercontent.com/heloisatorres1/web-testing-lab/main/docs/bug-reports/evidence/BUG-008-visual_user-wrong-prices.png" alt="Product list showing prices that differ from the catalog" loading="lazy">
+      <div class="body"><span class="id">BUG-008 · SauceDemo</span><h4>Catalog shows wrong prices that change on every page load</h4><span class="sev">Critical</span><span class="sev">P1</span><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-008.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <div class="body"><span class="id">BUG-009 · SauceDemo</span><h4>Login takes about 5 seconds</h4><span class="sev">Minor</span><span class="sev">P3</span><p>Measured at 5.1 s against 0.1 s for the other users; the time is recorded in the report on every run.</p><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-009.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <div class="body"><span class="id">BUG-010 · Swagger Petstore</span><h4>The API stores pets that break its own contract</h4><span class="sev">Major</span><span class="sev">P2</span><p>A pet without the required <code>name</code> is accepted, so listings contain objects that clients cannot trust.</p><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-010.md">Report</a></div>
+    </article>
+    <article class="bug">
+      <div class="body"><span class="id">BUG-011 · QA Workspace</span><h4>Secondary text falls below the WCAG AA contrast ratio on every page</h4><span class="sev">Major</span><span class="sev">P2</span><p>Found in my own app by the axe scan. One colour token (4.41:1 instead of 4.5:1) causes all 23 instances.</p><a href="https://github.com/heloisatorres1/web-testing-lab/blob/main/docs/bug-reports/BUG-011.md">Report</a></div>
+    </article>
+  </div>
+  <div class="note"><strong>Questions, not bugs.</strong> Two behaviours were logged as questions for the product owner because no requirement says they are wrong: SauceDemo completes an order with an empty cart ($0.00), and Restful-Booker accepts a checkout date before the checkin date. Keeping the two apart is what makes a bug list trustworthy.</div>
+</section>
+
+<section id="results">
+  <h2>Results</h2>
+  <p class="why">From the full run on 2026-11-16 (2.9 minutes locally with 4 workers; the same suites run in CI). An "expected failure" is a test that hit a documented bug.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Project</th><th class="num">Tests</th><th class="num">Passed</th><th class="num">Expected failures</th></tr></thead>
+    <tbody>
+      <tr><td><code>api</code> Petstore + Restful-Booker</td><td class="num">22</td><td class="num">21</td><td class="num">1</td></tr>
+      <tr><td><code>chromium</code> SauceDemo + QA Workspace</td><td class="num">112</td><td class="num">89</td><td class="num">23</td></tr>
+      <tr><td><code>firefox</code></td><td class="num">112</td><td class="num">89</td><td class="num">23</td></tr>
+      <tr><td><code>webkit</code></td><td class="num">112</td><td class="num">89</td><td class="num">23</td></tr>
+      <tr><td><code>mobile</code> Pixel 7 viewport</td><td class="num">2</td><td class="num">2</td><td class="num">0</td></tr>
+      <tr><td><code>bdd</code> Gherkin scenarios</td><td class="num">19</td><td class="num">18</td><td class="num">1</td></tr>
+      <tr><th>Total</th><th class="num">379</th><th class="num">308</th><th class="num">71</th></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Postman through Newman: Restful-Booker 12 requests and 16 assertions, Petstore 9 requests and 13 assertions, all passing. The 23 expected failures per browser are the 9 SauceDemo bugs across the users they affect, plus the 4 axe scans of QA Workspace.</p>
+</section>
+
+<section id="ci">
+  <h2>The pipeline</h2>
+  <p class="why">A test that only runs on one laptop proves little. The workflow in <code>.github/workflows/tests.yml</code> runs on every push, on every pull request, every night, and on demand.</p>
+  <ol class="steps">
+    <li><strong>Typecheck and BDD generation</strong> Compiles the TypeScript and turns the <code>.feature</code> files into runnable tests. Cheap, and it stops everything else if the code does not even compile.</li>
+    <li><strong>API job</strong> Playwright API tests, then both Postman collections through Newman, with an HTML report saved as an artifact.</li>
+    <li><strong>UI matrix</strong> Five jobs in parallel: Chromium, Firefox, WebKit, the phone viewport and the BDD scenarios. Each first checks that the sites under test are reachable, so an outage shows as a clear error rather than a hundred failures. On failure, traces and screenshots are uploaded.</li>
+    <li><strong>Publish</strong> Merges every job's results into one Allure report and deploys it, together with this page, to GitHub Pages.</li>
+  </ol>
+  <p>The first real run in CI failed in one job: the BDD tests were generated in the typecheck job but not in the job that ran them. That is the kind of thing a first run is for; the fix was one step in the workflow.</p>
+</section>
+
+<section id="glossary">
+  <h2>Glossary</h2>
+  <dl class="glossary">
+    <dt>Page object</dt><dd>A class that represents one screen: where its elements are and what a user can do there. Tests call it instead of touching selectors directly.</dd>
+    <dt>Fixture</dt><dd>Something a test receives ready-made, such as a logged-in page or a page object. In Playwright, fixtures are the parameters in <code>async ({ page, inventory })</code>.</dd>
+    <dt>Data-driven test</dt><dd>One test written once and run for each row of data, here once per SauceDemo user.</dd>
+    <dt>Web-first assertion</dt><dd>An <code>expect</code> that keeps re-checking until the condition is true or a timeout passes, instead of checking once. It replaces fixed waits.</dd>
+    <dt>Contract test</dt><dd>Checking a response against the API's published description (the Swagger file), not only against values you expect.</dd>
+    <dt>BDD / Gherkin</dt><dd>Writing scenarios as Given / When / Then in plain language, with each line bound to code that performs it.</dd>
+    <dt>Expected failure</dt><dd>A test marked as "we know this fails because of bug X". It is reported, not hidden, and alerts you when it starts passing.</dd>
+    <dt>Flaky test</dt><dd>A test that sometimes passes and sometimes fails without the product changing. Every flaky result here was traced to a cause and fixed at the source.</dd>
+    <dt>Traceability</dt><dd>The link from each test case back to the requirement it covers, so you can see what is and is not protected.</dd>
+    <dt>Severity vs priority</dt><dd>Severity is the impact on the user; priority is the order in which the team should fix it. They are rated separately: a cosmetic bug on the home page can be low severity and high priority.</dd>
+    <dt>CI (continuous integration)</dt><dd>Running the tests automatically on a server for every change, so results do not depend on anyone's laptop.</dd>
+    <dt>Allure</dt><dd>The report tool that merges results from all jobs into one browsable page with steps, screenshots, videos and attachments.</dd>
+  </dl>
+</section>
+
+<section id="run">
+  <h2>Run it yourself</h2>
+  <pre><code>git clone https://github.com/heloisatorres1/web-testing-lab.git
+cd web-testing-lab
+npm install
+npx playwright install                       # downloads the browsers
+
+npm run test:smoke                           # the P1 journeys, Chromium + API, about a minute
+npx playwright test --project=chromium --headed --grep "TC-SD-022"   # watch the purchase test in a visible browser
+npm run report                               # open the local HTML report</code></pre>
+</section>
+
+</div>
+</main>
+
+<footer>
+  <div class="wrap">Heloisa Oller Torres, QA Test Lead · <a href="https://www.linkedin.com/in/heloisa-torres-94250814a">LinkedIn</a> · <a href="https://github.com/heloisatorres1">GitHub</a></div>
+</footer>
+
+</body>
+</html>

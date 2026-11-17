@@ -2,7 +2,7 @@
 
 A QA portfolio project that tests four public web systems end to end: a store's UI, two REST APIs and a QA web application. It covers the things a web QA role asks for in one place: a test strategy, exploratory testing, test cases with traceability, UI automation with Playwright, API testing with Postman and Playwright, BDD scenarios in Gherkin, bug reports with evidence, and a CI pipeline that publishes the report.
 
-[![Tests](https://github.com/heloisatorres1/web-testing-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/heloisatorres1/web-testing-lab/actions/workflows/tests.yml) · **[Allure report](https://heloisatorres1.github.io/web-testing-lab/)** (published by CI)
+[![Tests](https://github.com/heloisatorres1/web-testing-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/heloisatorres1/web-testing-lab/actions/workflows/tests.yml) · **[Project page](https://heloisatorres1.github.io/web-testing-lab/)** (a guided tour of the project) · **[Allure report](https://heloisatorres1.github.io/web-testing-lab/report/)** (published by CI)
 
 ## Systems under test
 
@@ -61,6 +61,7 @@ Every failure in a run is either a known defect (expected failure) or a real fin
 | [`tests/`](tests/) | Playwright specs: `saucedemo/`, `qa-workspace/`, `api/` |
 | [`features/`](features/) | Gherkin feature files and step definitions (run through `playwright-bdd`) |
 | [`postman/`](postman/) | Postman collections and environment, run by Newman |
+| [`site/`](site/) | The project page deployed at the root of the GitHub Pages site, next to the Allure report |
 | [`.github/workflows/tests.yml`](.github/workflows/tests.yml) | CI: typecheck → API + Newman → UI matrix (Chromium, Firefox, WebKit, mobile, BDD) → Allure report to GitHub Pages |
 
 ## Strategy in short

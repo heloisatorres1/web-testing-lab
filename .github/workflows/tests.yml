@@ -121,15 +121,20 @@ jobs:
           pattern: allure-*
           path: allure-results
           merge-multiple: true
-      - name: Generate the report
+      - name: Generate the Allure report
         run: npm run report:allure
+      - name: Assemble the site (project page at /, Allure report at /report/)
+        run: |
+          mkdir -p public
+          cp -r site/. public/
+          mv allure-report public/report
       - uses: actions/download-artifact@v4
         with:
           name: newman-report
-          path: allure-report/newman
+          path: public/newman
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: allure-report
+          path: public
       - id: deployment
         uses: actions/deploy-pages@v4
