@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type APIRequestContext } from '@playwright/test';
 import { BOOKER_URL, bookerToken, expectJson, newBooking, type Booking } from '../../src/api/clients';
 
 test.describe('Restful-Booker API', () => {
@@ -13,7 +13,7 @@ test.describe('Restful-Booker API', () => {
     for (const id of created.splice(0)) await request.delete(`${BOOKER_URL}/booking/${id}`, { headers: { Cookie: `token=${token}` } });
   });
 
-  async function create(request: Parameters<Parameters<typeof test>[2]>[0]['request'], booking: Booking) {
+  async function create(request: APIRequestContext, booking: Booking) {
     const body = await expectJson(await request.post(`${BOOKER_URL}/booking`, { data: booking }), 200);
     created.push(body.bookingid);
     return body as { bookingid: number; booking: Booking };

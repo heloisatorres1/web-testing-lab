@@ -52,14 +52,12 @@ When('I fill a bug titled {string} with severity {string} and priority {string}'
 });
 
 When('I submit the finding', async ({ ws }) => {
-  const id = await ws.submitFinding();
-  ws.page.context().setDefaultTimeout(10_000);
-  (ws as unknown as { lastId: string }).lastId = id;
+  await ws.submitFinding();
 });
 
 Then('the finding appears in Triage with severity {string} and priority {string}', async ({ ws, page }, severity: string, priority: string) => {
-  const id = (ws as unknown as { lastId: string }).lastId;
-  await ws.goto(`triage/${id}`);
+  expect(ws.lastFindingId, 'a finding was submitted earlier in the scenario').toBeDefined();
+  await ws.goto(`triage/${ws.lastFindingId}`);
   const details = page.getByRole('dialog');
   await expect(details).toContainText(new RegExp(severity));
   await expect(details).toContainText(priority);

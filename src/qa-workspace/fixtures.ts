@@ -12,6 +12,9 @@ export interface BugDraft {
 
 /** Black-box driver for the deployed QA Workspace. Only public labels and routes are used. */
 export class Workspace {
+  /** ID of the last finding submitted through this driver (used by BDD steps). */
+  lastFindingId?: string;
+
   constructor(readonly page: Page) {}
 
   async goto(route: string) {
@@ -49,7 +52,8 @@ export class Workspace {
     await this.page.getByRole('dialog').getByRole('button', { name: 'Submit' }).click();
     const heading = this.page.getByRole('heading', { name: /CP-\d+ saved/ });
     await expect(heading).toBeVisible();
-    return (await heading.textContent())!.match(/CP-\d+/)![0];
+    this.lastFindingId = (await heading.textContent())!.match(/CP-\d+/)![0];
+    return this.lastFindingId;
   }
 
   async resetDemo() {

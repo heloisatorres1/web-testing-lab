@@ -53,7 +53,7 @@ Each test case has a priority derived from **impact × likelihood**:
 | **P2** | Major feature wrong, workaround exists | Sorting wrong, item not removed from cart |
 | **P3** | Minor or cosmetic | Wrong image, misaligned element |
 
-P1 cases run on every commit. The full suite runs nightly.
+Every push runs the full suite; `npm run test:smoke` runs only the P1 journeys for a quick local check. A nightly run catches changes in the public sites when nothing was pushed.
 
 ### 4.2 Test levels (test pyramid)
 
@@ -106,7 +106,7 @@ Functional, negative, regression, cross-browser, responsive, basic accessibility
 
 | System | Environment | Notes |
 | --- | --- | --- |
-| SD, PS, RB | Public production instances | Not under my control. Outages are reported as **blocked**, not failed. |
+| SD, PS, RB | Public production instances | Not under my control. An outage stops the run at the health check and is treated as **blocked**, not as a product failure. |
 | QW | GitHub Pages production build | Tests run after each deploy and nightly. |
 | Browsers | Chromium, Firefox, WebKit (latest Playwright builds) | Desktop 1280×720 and mobile viewport (Pixel 7). |
 
@@ -137,7 +137,7 @@ Defects are written in [`docs/bug-reports/`](bug-reports/) using one template: t
 
 | Risk | Impact | Mitigation |
 | --- | --- | --- |
-| Public sites change or go down | False failures | Health check before the run; outages marked blocked; selectors use stable `data-test` attributes |
+| Public sites change or go down | False failures | CI checks that each site responds before the UI tests, so an outage fails with one clear message instead of a hundred test failures; selectors use stable `data-test` attributes |
 | Shared Petstore data changed by other users | Flaky API tests | Unique IDs per run; create → verify → delete in every test; no reliance on existing records |
 | Rate limiting on free APIs | Failed runs | Low request volume, no parallel load, retries only on network errors |
 | Timing-dependent pages (spinner, lazy load, glitch user) | Flaky UI tests | Web-first assertions that wait for state; no fixed sleeps |

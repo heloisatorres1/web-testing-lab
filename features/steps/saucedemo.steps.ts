@@ -1,14 +1,15 @@
 import { expect } from '@playwright/test';
 import { Given, When, Then } from './fixtures';
-import { MESSAGES, PRODUCTS, product, type Username } from '../../src/saucedemo/data';
+import { PRODUCTS, product, type Username } from '../../src/saucedemo/data';
 import type { SortOption } from '../../src/saucedemo/pages/InventoryPage';
 
 Given('I am on the Swag Labs login page', async ({ loginPage }) => {
   await loginPage.open();
 });
 
-Given('I log in as {string}', async ({ loginPage, inventory, page }, user: string) => {
-  if (!page.url().includes('saucedemo.com') || page.url().endsWith('.html')) await loginPage.open();
+Given('I log in as {string}', async ({ loginPage, inventory }, user: string) => {
+  // Always start from the login page, also after a logout or when another page is open.
+  await loginPage.open();
   await loginPage.login(user as Username);
   await inventory.expectLoaded();
 });
@@ -95,4 +96,3 @@ Then('the products are ordered by {word} {word}', async ({ inventory }, key: str
   }
 });
 
-export { MESSAGES };

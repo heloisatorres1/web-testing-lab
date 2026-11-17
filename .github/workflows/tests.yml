@@ -15,8 +15,6 @@ concurrency:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 env:
   CI: true
@@ -106,6 +104,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [api, ui]
     if: always() && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -129,6 +131,7 @@ jobs:
           cp -r site/. public/
           mv allure-report public/report
       - uses: actions/download-artifact@v4
+        continue-on-error: true   # the API job may have stopped before Newman ran
         with:
           name: newman-report
           path: public/newman

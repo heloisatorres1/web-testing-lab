@@ -1,4 +1,4 @@
-import { expect, request, type APIRequestContext, type APIResponse } from '@playwright/test';
+import { expect, type APIRequestContext, type APIResponse } from '@playwright/test';
 import Ajv, { type ValidateFunction } from 'ajv';
 import addFormats from 'ajv-formats';
 
@@ -74,6 +74,3 @@ export async function bookerToken(api: APIRequestContext) {
   return body.token as string;
 }
 
-export async function newContext() {
-  return request.newContext({ extraHTTPHeaders: { Accept: 'application/json' } });
-}
