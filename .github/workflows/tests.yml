@@ -100,17 +100,13 @@ jobs:
           retention-days: 7
 
   report:
-    name: Publish Allure report
+    name: Build Allure report
     runs-on: ubuntu-latest
     needs: [api, ui]
     if: always() && github.ref == 'refs/heads/main'
     permissions:
       contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      pages: read
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -139,5 +135,20 @@ jobs:
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public
+
+  # Deploying in its own job, as in GitHub's Pages starter workflows: by the time this job
+  # starts, the uploaded site is listed among the run's artifacts.
+  deploy:
+    name: Publish to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: report
+    if: always() && needs.report.result == 'success'
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
