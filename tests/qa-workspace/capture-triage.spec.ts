@@ -65,6 +65,7 @@ test.describe('Triage', () => {
   test('TC-QW-008 filters combine and clear @p2', async ({ page, ws }) => {
     await ws.goto('triage');
     const rows = page.getByRole('link', { name: /CP-\d+/ });
+    await expect(rows.first()).toBeVisible();
     const all = await rows.count();
     expect(all).toBeGreaterThan(0);
 
@@ -75,10 +76,16 @@ test.describe('Triage', () => {
 
     const filters = page.getByRole('group', { name: 'Filters' });
     await filters.getByLabel(/^Build/).selectOption({ index: 1 });
+    await expect(page).toHaveURL(/build=/);
     await expect.poll(() => rows.count()).toBeLessThanOrEqual(criticalOnly);
 
+    // Each filter change rebuilds the URL from the filters of the last render. Changing a second
+    // filter before that render brings the first one back (WebKit in CI did this), so wait for the
+    // URL in between, as a person would see the list update before the next click.
     await page.getByLabel(/^Severity/).selectOption('');
+    await expect(page).not.toHaveURL(/severity=/);
     await filters.getByLabel(/^Build/).selectOption('');
+    await expect(page).not.toHaveURL(/build=/);
     await expect.poll(() => rows.count()).toBe(all);
   });
 

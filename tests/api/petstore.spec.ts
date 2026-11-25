@@ -83,7 +83,10 @@ test.describe('Petstore API', () => {
   });
 
   test('TC-PS-006 findByStatus with an invalid value returns an empty list, not an error @p3', async ({ request }) => {
-    const body = await expectJson(await request.get(`${PETSTORE_URL}/pet/findByStatus`, { params: { status: 'flying' } }), 200);
+    // The server is shared and accepts any status on create (BUG-010), so a fixed word like "flying"
+    // can be used by someone else's pet. A value unique to this run cannot.
+    const status = `no-such-status-${Date.now()}`;
+    const body = await expectJson(await request.get(`${PETSTORE_URL}/pet/findByStatus`, { params: { status } }), 200);
     expect(body).toEqual([]);
   });
 
