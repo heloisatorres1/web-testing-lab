@@ -68,7 +68,7 @@
     },
     {
       "name": "TC-PS-006 Invalid status gives an empty list",
-      "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/pet/findByStatus?status=flying", "host": ["{{baseUrl}}"], "path": ["pet", "findByStatus"], "query": [{ "key": "status", "value": "flying" }] } },
+      "request": { "method": "GET", "url": { "raw": "{{baseUrl}}/pet/findByStatus?status=no-such-status-{{$timestamp}}", "host": ["{{baseUrl}}"], "path": ["pet", "findByStatus"], "query": [{ "key": "status", "value": "no-such-status-{{$timestamp}}" }] } },
       "event": [{ "listen": "test", "script": { "exec": ["pm.test('200 and []', () => { pm.response.to.have.status(200); pm.expect(pm.response.json()).to.eql([]); });"] } }]
     },
     {
