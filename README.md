@@ -4,6 +4,8 @@ A QA portfolio project that tests four public web systems end to end: a store's 
 
 [![Tests](https://github.com/heloisatorres1/web-testing-lab/actions/workflows/tests.yml/badge.svg)](https://github.com/heloisatorres1/web-testing-lab/actions/workflows/tests.yml) · **[Project page](https://heloisatorres1.github.io/web-testing-lab/)** (a guided tour of the project) · **[Allure report](https://heloisatorres1.github.io/web-testing-lab/report/)** (published by CI)
 
+> **Red ✘ marks in the CI log are on purpose.** About 70 tests check bugs that are already reported and still open. They are expected to fail, and a run counts as green while they do. A run only turns red for a new problem, or when a known bug gets fixed. See [How known defects are handled](#how-known-defects-are-handled).
+
 ## Systems under test
 
 | System | What it is | Why it is here |
@@ -26,7 +28,21 @@ Two things were deliberately logged as **questions for the product owner, not bu
 
 ## How known defects are handled
 
-Every confirmed defect is mapped in [`src/saucedemo/known-defects.ts`](src/saucedemo/known-defects.ts) to the test case and user it affects. A test that hits one is marked `test.fail()` with the bug ID. The suite stays green while the defects stay visible in the report, and if a defect is ever fixed the test passes "unexpectedly" and the run fails, which is the signal to close the bug.
+The tests are not changed to pass around a bug. A test that finds a confirmed bug keeps checking the correct behaviour, and is marked as an **expected failure** with the bug ID:
+
+- SauceDemo bugs are mapped in [`src/saucedemo/known-defects.ts`](src/saucedemo/known-defects.ts) to the test case and user they affect.
+- Other bugs (BUG-010, BUG-011) are marked in the test itself with `test.fail()` and a link to the bug report.
+- In the Gherkin scenarios, the `@fail` tag does the same job (BUG-001).
+
+What this means when you read a run:
+
+| You see | Meaning | Run result |
+| --- | --- | --- |
+| ✘ on a test marked with a bug ID | The known bug is still there | Green |
+| A test marked with a bug ID suddenly passes | The bug was fixed: time to retest and close it | Red |
+| ✘ on any other test | A new problem: a bug in the system, or a test that needs updating | Red |
+
+So the defects stay visible in the report without hiding new failures, and nothing is skipped.
 
 ## Results
 
@@ -103,6 +119,7 @@ Playwright's `--reporter` flag replaces the reporters in the config, so run with
 - **Flaky ≠ broken, but both need a cause.** WebKit under parallel load sometimes wiped a field that had just been typed into, something a person cannot reproduce. The fix is a verified fill in the page object with a comment explaining why, not a retry on the test.
 - **Shared test services are a test design problem.** Petstore returned other people's malformed pets and failed a contract check that was never about my data. The contract check now applies to the record the test created, and the server's acceptance of bad data became its own bug.
 - **Expected failures beat skipped tests.** `test.fail()` keeps the defect in the report and tells you the moment it gets fixed; `test.skip()` hides it.
+- **The nightly run earns its keep.** On 2026-11-24 the scheduled run failed in every browser: I had added a feature to QA Workspace and the search box label gained a word. Nobody had pushed to this repo, so only the nightly check caught it. The app worked, so this was a test to update, not a bug. The test now matches the stable start of the label rather than the whole sentence, while the expected-failure tests were left as they are.
 - **Tool details matter in CI.** Postman's validator rejects Swagger's `int64` format, and Playwright's `--reporter` flag silently drops the Allure reporter. Both are documented where they bite.
 
 ## Tools

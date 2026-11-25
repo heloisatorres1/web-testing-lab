@@ -61,7 +61,7 @@ test('TC-QW-018 narrow layout collapses navigation without horizontal scroll @p2
 test('TC-QW-019 Ctrl+K focuses search and Enter searches @p3', async ({ page, ws }) => {
   await ws.goto('');
   await page.keyboard.press('Control+k');
-  const search = page.getByLabel('Search findings, cases, runs and links');
+  const search = page.getByLabel(/^Search findings, cases, runs/);
   await expect(search).toBeFocused();
   await page.keyboard.type('CP-104');
   await page.keyboard.press('Enter');
